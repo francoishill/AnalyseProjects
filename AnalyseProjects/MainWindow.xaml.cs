@@ -106,22 +106,32 @@ namespace AnalyseProjects
 
 			string displayName = ReflectionInterop.GetPropertyDisplayName(e.PropertyDescriptor);
 			if (!string.IsNullOrEmpty(displayName))
-			{
 				e.Column.Header = displayName;
-			};
+			string descriptionForTooltips = ReflectionInterop.GetPropertyDescription(e.PropertyDescriptor);
+			if (!string.IsNullOrWhiteSpace(descriptionForTooltips))
+				ToolTipService.SetToolTip(e.Column, descriptionForTooltips);
 		}
 	}
 
 	public class OwnApplicationItem : INotifyPropertyChanged
 	{
+		private ImageSource _applicationicon;
+		[DisplayName("Icon")]
+		public ImageSource ApplicationIcon
+		{
+			get { if (_applicationicon == null) if (ApplicationIconPath != null) _applicationicon = IconsInterop.IconExtractor.Extract(ApplicationIconPath, IconsInterop.IconExtractor.IconSize.Large).IconToImageSource(); return _applicationicon; }
+		}
+
 		[DisplayName("Application Name")]
 		public string ApplicationName { get; private set; }
 		protected string ApplicationIconPath { get; private set; }
 		protected string SolutionFilePath { get; private set; }
 		protected Dictionary<string, OwnAppsInterop.ApplicationTypes> CsProjectRelativeToSolutionFilePaths { get; private set; }
 		[DisplayName("Installed")]
+		[Description("Is the application installed locally on this machine.")]
 		public bool IsInstalled { get; private set; }
 		[DisplayName("Versioned")]
+		[Description("Is the source code of this application Version Controlled (like with SVN or GIT).")]
 		public bool IsVersionControlled { get; private set; }
 
 		private Brush _currentcolor;
@@ -130,32 +140,30 @@ namespace AnalyseProjects
 		private bool? _unhandledexceptionshandled;
 		//NULL means not checked yet
 		[DisplayName("Unhandled Exceptions")]
+		[Description("Are the Unhandled Exceptions handled via an event handler inside our application's main entry point.")]
 		public bool? UnhandledExceptionsHandled { get { return _unhandledexceptionshandled; } set { _unhandledexceptionshandled = value; OnPropertyChanged("UnhandledExceptionsHandled"); } }
 
 		private bool? _appiconimplemented;
 		//NULL means not checked yet
 		[DisplayName("App Icon")]
+		[Description("Whether the application's icon is actually implemented in the C# project.")]
 		public bool? AppIconImplemented { get { return _appiconimplemented; } set { _appiconimplemented = value; OnPropertyChanged("AppIconImplemented"); } }
-		
+
 		private bool? _autoupdatingimplemented;
 		//NULL means not checked yet
 		[DisplayName("Auto Updating")]
+		[Description("Whether Auto Updating is implemented in our application's main entry point.")]
 		public bool? AutoUpdatingImplemented { get { return _autoupdatingimplemented; } set { _autoupdatingimplemented = value; OnPropertyChanged("AutoUpdatingImplemented"); } }
 		private bool? _licensingimplemented;
 		//NULL means not checked yet
 		[DisplayName("Licensing")]
+		[Description("Whether Licensing is implemented in our application's main entry point.")]
 		public bool? LicensingImplemented { get { return _licensingimplemented; } set { _licensingimplemented = value; OnPropertyChanged("LicensingImplemented"); } }
 		private bool? _lastcheckrelativepathscorrect;
 		//NULL means not checked yet
 		[DisplayName("Relative Paths")]
+		[Description("Have we checked that all paths (in csproj files) are relative (and correct) instead of absolute.")]
 		public bool? RelativePathsCorrect { get { return _lastcheckrelativepathscorrect; } set { _lastcheckrelativepathscorrect = value; OnPropertyChanged("LastCheckRelativePathsCorrect"); } }
-
-		private ImageSource _applicationicon;
-		[DisplayName("Icon")]
-		public ImageSource ApplicationIcon
-		{
-			get { if (_applicationicon == null) _applicationicon = IconsInterop.IconExtractor.Extract(ApplicationIconPath, IconsInterop.IconExtractor.IconSize.Large).IconToImageSource(); return _applicationicon; }
-		}
 
 		public OwnApplicationItem(string ApplicationName, out string errorIfFailed)
 		{
@@ -190,6 +198,7 @@ namespace AnalyseProjects
 			//IsVersionControlled = false;
 
 			//Reset to NULL
+			this.UnhandledExceptionsHandled = null;
 			this.AppIconImplemented = null;
 			this.AutoUpdatingImplemented = null;
 			this.LicensingImplemented = null;
@@ -206,6 +215,8 @@ namespace AnalyseProjects
 				return false;
 			}
 
+			int todoCheckForUnhandledExceptionsHandledIsRedundant;
+			//TODO: In the code of CheckForUpdates_ExceptionHandler, it also registers an event handler for Unhandled Exceptions
 			if (!DetermineIfUnhandledExceptionsHandled(out errorIfFailed))
 				return false;
 			if (!DetermineIfAppIconImplemented(out errorIfFailed))
@@ -222,11 +233,35 @@ namespace AnalyseProjects
 
 		private bool DetermineIfUnhandledExceptionsHandled(out string errorIfFailed)
 		{
-			errorIfFailed = "DetermineIfUnhandledExceptionsHandled not implemented yet.";
-			return false;
-
-			//errorIfFailed = null;
-			//return true;
+			this.UnhandledExceptionsHandled = false;
+			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
+			if (this.CsProjectRelativeToSolutionFilePaths.Count(kv => kv.Value != OwnAppsInterop.ApplicationTypes.DLL) > 0)
+			{
+				foreach (var csProjPathsForExeTypes in this.CsProjectRelativeToSolutionFilePaths.Where(kv => kv.Value != OwnAppsInterop.ApplicationTypes.DLL))
+				{
+					string tmperr;
+					string tmpCsprojFullpath = Path.Combine(Path.GetDirectoryName(this.SolutionFilePath), csProjPathsForExeTypes.Key);
+					bool? unhandledexceptionhandlingImplementedInThisProj = OwnAppsInterop.IsUnhandledExceptionHandlingImplemented(tmpCsprojFullpath, this.CsProjectRelativeToSolutionFilePaths[csProjPathsForExeTypes.Key], out tmperr);
+					if (unhandledexceptionhandlingImplementedInThisProj.HasValue)
+					{
+						this.UnhandledExceptionsHandled = unhandledexceptionhandlingImplementedInThisProj;
+						if (unhandledexceptionhandlingImplementedInThisProj.Value == true)
+							break;
+					}
+					else
+						tmpcachedErrors.Add(tmperr);
+				}
+			}
+			else
+				tmpcachedErrors.Add("CsProjectRelativeToSolutionFilePaths.Count(only WinExe or Exe projects) should be > 0.");
+			if (this.UnhandledExceptionsHandled == null)
+			{
+				errorIfFailed = "Unable to determine UnhandledExceptionsHandled for application '" + this.ApplicationName + "': "
+					+ string.Join("|", tmpcachedErrors);
+				return false;
+			}
+			errorIfFailed = null;
+			return true;
 		}
 
 		private bool DetermineIfAppIconImplemented(out string errorIfFailed)
@@ -263,6 +298,7 @@ namespace AnalyseProjects
 
 		private bool DetermineIfAutoUpdatingIsImplemented(out string errorIfFailed)
 		{
+			this.AutoUpdatingImplemented = false;
 			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
 			if (this.CsProjectRelativeToSolutionFilePaths.Count(kv => kv.Value != OwnAppsInterop.ApplicationTypes.DLL) > 0)
 			{
@@ -274,6 +310,8 @@ namespace AnalyseProjects
 					if (autoupdatingImplementedInThisProj.HasValue)
 					{
 						this.AutoUpdatingImplemented = autoupdatingImplementedInThisProj;
+						if (autoupdatingImplementedInThisProj.Value == true)
+							break;
 					}
 					else
 						tmpcachedErrors.Add(tmperr);
@@ -281,7 +319,7 @@ namespace AnalyseProjects
 			}
 			else
 				tmpcachedErrors.Add("CsProjectRelativeToSolutionFilePaths.Count(only WinExe or Exe projects) should be > 0.");
-			if (this.AppIconImplemented == null)
+			if (this.AutoUpdatingImplemented == null)
 			{
 				errorIfFailed = "Unable to determine AutoUpdatingImplemented for application '" + this.ApplicationName + "': "
 					+ string.Join("|", tmpcachedErrors);
@@ -293,8 +331,35 @@ namespace AnalyseProjects
 
 		private bool DetermineIfLicensingIsImplemented(out string errorIfFailed)
 		{
-			errorIfFailed = "DetermineIfLicensingIsImplemented not implemented yet.";
-			return false;
+			this.LicensingImplemented = false;
+			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
+			if (this.CsProjectRelativeToSolutionFilePaths.Count(kv => kv.Value != OwnAppsInterop.ApplicationTypes.DLL) > 0)
+			{
+				foreach (var csProjPathsForExeTypes in this.CsProjectRelativeToSolutionFilePaths.Where(kv => kv.Value != OwnAppsInterop.ApplicationTypes.DLL))
+				{
+					string tmperr;
+					string tmpCsprojFullpath = Path.Combine(Path.GetDirectoryName(this.SolutionFilePath), csProjPathsForExeTypes.Key);
+					bool? licensingImplementedInThisProj = OwnAppsInterop.IsLicensingImplemented(tmpCsprojFullpath, this.CsProjectRelativeToSolutionFilePaths[csProjPathsForExeTypes.Key], out tmperr);
+					if (licensingImplementedInThisProj.HasValue)
+					{
+						this.LicensingImplemented = licensingImplementedInThisProj;
+						if (licensingImplementedInThisProj.Value == true)
+							break;
+					}
+					else
+						tmpcachedErrors.Add(tmperr);
+				}
+			}
+			else
+				tmpcachedErrors.Add("CsProjectRelativeToSolutionFilePaths.Count(only WinExe or Exe projects) should be > 0.");
+			if (this.LicensingImplemented == null)
+			{
+				errorIfFailed = "Unable to determine LicensingImplemented for application '" + this.ApplicationName + "': "
+					+ string.Join("|", tmpcachedErrors);
+				return false;
+			}
+			errorIfFailed = null;
+			return true;
 		}
 
 		private bool DoubleCheckPathsInProjectsAreCorrectAndRelativePaths(out string errorIfFailed)
