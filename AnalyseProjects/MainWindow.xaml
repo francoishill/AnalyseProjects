@@ -1,0 +1,30 @@
+﻿<Window x:Class="AnalyseProjects.MainWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="MainWindow"
+		Height='136'
+		Width='481'
+		WindowStartupLocation='CenterScreen'
+		WindowState='Maximized'
+		Loaded='Window_Loaded'>
+	<Grid Margin='10'>
+		<Grid.RowDefinitions>
+			<RowDefinition Height='30' />
+			<RowDefinition />
+		</Grid.RowDefinitions>
+		<Button Content='Analyse'
+				HorizontalAlignment='Left'
+				VerticalAlignment='Top'
+				Click='buttonAnalyse_Click' />
+		<DataGrid Name='datagridApplicationsList'
+				  Grid.Row='1'
+				  AutoGeneratingColumn='datagridApplicationsList_AutoGeneratingColumn'>
+			<DataGrid.Resources>
+				<DataTemplate x:Key="ImageTemplate">
+					<Image Source="{Binding ApplicationIcon}"
+						   Width='16' />
+				</DataTemplate>
+			</DataGrid.Resources>
+		</DataGrid>
+	</Grid>
+</Window>
