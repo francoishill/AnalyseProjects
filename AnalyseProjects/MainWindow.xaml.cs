@@ -41,9 +41,10 @@ namespace AnalyseProjects
 			foreach (var appname in applist)
 			{
 				string tmperr;
-				ApplicationsList.Add(new OwnApplicationItem(appname, out tmperr));
+				OwnApplicationItem tmpApp = new OwnApplicationItem(appname, out tmperr);
+				ApplicationsList.Add(tmpApp);
 				if (!string.IsNullOrWhiteSpace(tmperr))
-					AppendError(tmperr);
+					AppendError(tmpApp, tmperr);
 				//errors.Add(tmperr);
 			}
 			//if (errors.Count > 0)
@@ -55,24 +56,49 @@ namespace AnalyseProjects
 			datagridApplicationsList.ItemsSource = ApplicationsList;
 		}
 
-		private void AppendMessage(string message, Brush foregroundColor = null)
+		private static void _appendToRichTextbox(RichTextBox richTextbox, string msg, Brush foregroundColor)
 		{
-			string datetimeStr = "[" + DateTime.Now.ToString("HH:mm:ss") + "] ";
-			var run = new Run(datetimeStr + message);
+			var run = new Run(msg);
 			if (foregroundColor != null)
 				run.Foreground = foregroundColor;
-			richtextboxMessages.Document.Blocks.Add(new Paragraph(run));
-			richtextboxMessages.ScrollToEnd();
+			richTextbox.Document.Blocks.Add(new Paragraph(run));
+			richTextbox.ScrollToEnd();
 		}
 
-		private void AppendError(string errmsg)
+		private void UpdateCurrentItemDisplayedMessages()
 		{
-			AppendMessage(errmsg, Brushes.Red);
+			richtextboxCurrentItemMessages.Document.Blocks.Clear();
+			if (datagridApplicationsList.SelectedItems.Count != 1)
+				return;
+			OwnApplicationItem app = datagridApplicationsList.SelectedItems[0] as OwnApplicationItem;
+			if (app == null)
+				return;
+			if (recordedMessages.ContainsKey(app))
+				foreach (var mesAndBrush in recordedMessages[app])
+					_appendToRichTextbox(richtextboxCurrentItemMessages, mesAndBrush.Key, mesAndBrush.Value);
 		}
 
-		private void AppendWarning(string warnmsg)
+		Dictionary<OwnApplicationItem, List<KeyValuePair<string, Brush>>> recordedMessages = new Dictionary<OwnApplicationItem, List<KeyValuePair<string, Brush>>>();
+		private void AppendMessage(OwnApplicationItem relevantApp, string message, Brush foregroundColor = null)
 		{
-			AppendMessage(warnmsg, Brushes.Orange);
+			string datetimeStr = "[" + DateTime.Now.ToString("HH:mm:ss") + "] ";
+			string msgToWrite = datetimeStr + message;
+			if (!recordedMessages.ContainsKey(relevantApp))
+				recordedMessages.Add(relevantApp, new List<KeyValuePair<string, Brush>>());
+			recordedMessages[relevantApp].Add(new KeyValuePair<string, Brush>(msgToWrite, foregroundColor));
+			UpdateCurrentItemDisplayedMessages();
+
+			_appendToRichTextbox(richtextboxMessages, msgToWrite, foregroundColor);
+		}
+
+		private void AppendError(OwnApplicationItem relevantItem, string errmsg)
+		{
+			AppendMessage(relevantItem, errmsg, Brushes.Red);
+		}
+
+		private void AppendWarning(OwnApplicationItem relevantItem, string warnmsg)
+		{
+			AppendMessage(relevantItem, warnmsg, Brushes.Orange);
 		}
 
 		private void buttonAnalyse_Click(object sender, RoutedEventArgs e)
@@ -82,7 +108,7 @@ namespace AnalyseProjects
 
 			//Dictionary<string, bool> errorsTrueWarningsFalse = new Dictionary<string, bool>();
 			//Cannot use Dictionary<string, bool> because we might have multiple Key's
-			List<KeyValuePair<string, bool>> errorsTrueWarningsFalse = new List<KeyValuePair<string, bool>>();
+			//List<KeyValuePair<string, bool>> errorsTrueWarningsFalse = new List<KeyValuePair<string, bool>>();
 			foreach (var app in ApplicationsList)
 			{
 				string tmperr;
@@ -91,16 +117,22 @@ namespace AnalyseProjects
 
 				if (warnings != null && warnings.Count > 0)//Warnings can occur although we have success == true
 					foreach (var warn in warnings)
-						errorsTrueWarningsFalse.Add(new KeyValuePair<string,bool>(warn, false));
+					{
+						//errorsTrueWarningsFalse.Add(new KeyValuePair<string,bool>(warn, false));
+						AppendWarning(app, warn);
+					}
 				if (!success)
-					errorsTrueWarningsFalse.Add(new KeyValuePair<string,bool>(tmperr, true));
+				{
+					AppendError(app, tmperr);
+					//errorsTrueWarningsFalse.Add(new KeyValuePair<string,bool>(tmperr, true));
+				}
 			}
 
-			foreach (var distinctErr in errorsTrueWarningsFalse.Distinct())
-				if (distinctErr.Value)//Is error
-					AppendError(distinctErr.Key);
-				else
-					AppendWarning(distinctErr.Key);
+			//foreach (var distinctErr in errorsTrueWarningsFalse.Distinct())
+			//    if (distinctErr.Value)//Is error
+			//        AppendError(distinctErr.Key);
+			//    else
+			//        AppendWarning(distinctErr.Key);
 
 			//if (errors.Count > 0)
 			//    UserMessages.ShowWarningMessage(
@@ -163,6 +195,11 @@ namespace AnalyseProjects
 			{
 				item.OpenInCSharpExpress();
 			});
+		}
+
+		private void datagridApplicationsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			UpdateCurrentItemDisplayedMessages();
 		}
 	}
 
@@ -406,7 +443,7 @@ namespace AnalyseProjects
 			string csprojFULLpath = Path.Combine(Path.GetDirectoryName(this.SolutionFilePath), this.CsProjectRelativeToSolutionFilePath.Value.Key);
 			string csprojFileRelativePathToVSroot = OwnAppsInterop.GetPathRelativeToVsRootFolder(csprojFULLpath, out errorIfFailed);
 			if (csprojFileRelativePathToVSroot == null) return false;
-			
+
 			string[] relativeSolutionPathSegments = solutionFileRelativePathToVSroot.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
 			if (relativeSolutionPathSegments.Length != 2
 				|| !relativeSolutionPathSegments[0].Equals(this.ApplicationName)
