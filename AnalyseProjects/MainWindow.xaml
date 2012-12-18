@@ -7,7 +7,23 @@
 		WindowStartupLocation='CenterScreen'
 		WindowState='Maximized'
 		Loaded='Window_Loaded'>
+	<Window.Resources>
+		<ContextMenu  x:Key="RowMenu"
+					  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+			<MenuItem Header="Open in C#"
+					  Click='menuitemOpenInCSharp_Click' />
+		</ContextMenu>
+		<Style x:Key="DefaultRowStyle"
+			   TargetType="{x:Type DataGridRow}">
+			<Setter Property="ContextMenu"
+					Value="{StaticResource RowMenu}" />
+		</Style>
+	</Window.Resources>
 	<Grid Margin='10'>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width='3*' />
+			<ColumnDefinition Width='2*' />
+		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height='30' />
 			<RowDefinition />
@@ -18,6 +34,7 @@
 				Click='buttonAnalyse_Click' />
 		<DataGrid Name='datagridApplicationsList'
 				  Grid.Row='1'
+				  RowStyle='{StaticResource DefaultRowStyle}'
 				  AutoGeneratingColumn='datagridApplicationsList_AutoGeneratingColumn'>
 			<DataGrid.Resources>
 				<Style TargetType="{x:Type DataGridColumnHeader}">
@@ -35,5 +52,23 @@
 				</DataTemplate>
 			</DataGrid.Resources>
 		</DataGrid>
+		<RichTextBox Name='richtextboxMessages'
+					 Grid.Column='1'
+					 Grid.Row='1'
+					 IsDocumentEnabled='True'
+					 BorderThickness='1'
+					 IsReadOnly='True'
+					 IsReadOnlyCaretVisible='True'
+					 FontSize='15'
+					 Background='#fafafa'
+					 ScrollViewer.VerticalScrollBarVisibility='Auto'>
+			<RichTextBox.Resources>
+				<Style TargetType="{x:Type Paragraph}">
+					<Setter Property="Margin"
+							Value="0" />
+				</Style>
+			</RichTextBox.Resources>
+			<FlowDocument PageWidth='{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=RichTextBox}}' />
+		</RichTextBox>
 	</Grid>
 </Window>

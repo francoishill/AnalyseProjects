@@ -57,6 +57,9 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Framework" />
@@ -97,6 +100,9 @@
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CalledFromService.cs">
       <Link>CalledFromService.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CodeMinimization.cs">
+      <Link>CodeMinimization.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CompareObjects.cs">
       <Link>CompareObjects.cs</Link>
     </Compile>
@@ -131,6 +137,9 @@
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\LicensingInterop_Shared.cs">
       <Link>LicensingInterop_Shared.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\Logging.cs">
+      <Link>Logging.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\MiniDownloadBarForm.cs">
       <Link>MiniDownloadBarForm.cs</Link>
       <SubType>Form</SubType>
@@ -159,6 +168,9 @@
     </Compile>
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\ReflectionInterop.cs">
       <Link>ReflectionInterop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\RegexInterop.cs">
+      <Link>RegexInterop.cs</Link>
     </Compile>
     <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\RegistryInterop.cs">
       <Link>RegistryInterop.cs</Link>
@@ -239,6 +251,9 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="app.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
