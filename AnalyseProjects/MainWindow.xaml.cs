@@ -275,6 +275,12 @@ namespace AnalyseProjects
 		[Description("Are all the correct policies implemented into the NSIS setup file (like privacy policies, etc).")]
 		public bool? PoliciesImplemented { get { return _policiesimplemented; } set { _policiesimplemented = value; OnPropertyChanged("PoliciesImplemented"); } }
 
+		private bool? _issuetrackingimplemented;
+		//NULL means not checked yet
+		[DisplayName("Issues")]
+		[Description("Whether an issue tracking system is implemented (like Trac).")]
+		public bool? IssueTrackingImplemented { get { return _issuetrackingimplemented; } set { _issuetrackingimplemented = value; OnPropertyChanged("IssueTrackingImplemented"); } }
+
 		public OwnApplicationItem(string ApplicationName, out string errorIfFailed)
 		{
 			errorIfFailed = "";
@@ -326,6 +332,7 @@ namespace AnalyseProjects
 			this.LicensingImplemented = null;
 			this.AboutBoxImplemented = null;
 			this.PoliciesImplemented = null;
+			this.IssueTrackingImplemented = null;
 
 			if (this.SolutionFilePath == null)
 			{
@@ -357,6 +364,8 @@ namespace AnalyseProjects
 			if (!DetermineIfAboutBoxIsImplemented(out errorIfFailed))
 				return false;
 			if (!DetermineIfPoliciesArePartOfNsisSetup(out errorIfFailed))
+				return false;
+			if (!DetermineIfIssueTrackingIsImplemented(out errorIfFailed))
 				return false;
 
 			int todoCentralizeAutoStartupWithWindows;
@@ -554,6 +563,12 @@ namespace AnalyseProjects
 		private bool DetermineIfPoliciesArePartOfNsisSetup(out string errorIfFailed)
 		{
 			errorIfFailed = "DetermineIfLicensePoliciesArePartOfNsisSetup not implemented yet.";
+			return false;
+		}
+
+		private bool DetermineIfIssueTrackingIsImplemented(out string errorIfFailed)
+		{
+			errorIfFailed = "DetermineIfIssueTrackingIsImplemented not implemented yet.";
 			return false;
 		}
 
