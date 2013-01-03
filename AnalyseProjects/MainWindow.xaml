@@ -2,44 +2,68 @@
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="MainWindow"
-		Height='231'
+		Height='293'
 		Width='481'
 		WindowStartupLocation='CenterScreen'
 		WindowState='Maximized'
 		Loaded='Window_Loaded'>
 	<Window.Resources>
-		<ContextMenu  x:Key="RowMenu"
-					  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-			<MenuItem Header="Open in C#"
-					  Click='menuitemOpenInCSharp_Click' />
-		</ContextMenu>
-		<Style x:Key="DefaultRowStyle"
-			   TargetType="{x:Type DataGridRow}">
-			<Setter Property="ContextMenu"
-					Value="{StaticResource RowMenu}" />
-		</Style>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source='Themes/Default.xaml' />
+				<ResourceDictionary>
+					<ContextMenu  x:Key="RowMenu"
+								  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+						<MenuItem Header="Open in C#"
+								  Click='menuitemOpenInCSharp_Click' />
+						<Separator />
+						<MenuItem Header='_Additional'>
+							<MenuItem Header='Copy .csproj file full path'
+									  Click='menuitemCopyCsProjFileFullPath_Click' />
+						</MenuItem>
+					</ContextMenu>
+					<Style x:Key="DefaultRowStyle"
+						   TargetType="{x:Type DataGridRow}">
+						<Setter Property="ContextMenu"
+								Value="{StaticResource RowMenu}" />
+					</Style>
+				</ResourceDictionary>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
 	</Window.Resources>
 	<Grid Margin='10'>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width='3*' />
+			<ColumnDefinition Width='5*' />
 			<ColumnDefinition Width='2*' />
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height='30' />
 			<RowDefinition />
-			<RowDefinition Height='100' />
+			<RowDefinition Height='120' />
+			<RowDefinition Height='30' />
 		</Grid.RowDefinitions>
-		<Button Content='Analyse'
+		<Button Content='_Analyse'
 				HorizontalAlignment='Left'
 				VerticalAlignment='Top'
-				Click='buttonAnalyse_Click' />
+				Click='buttonAnalyse_Click'
+				Template='{StaticResource buttonTemplate}' />
 		<DataGrid Name='datagridApplicationsList'
 				  Grid.Row='1'
 				  RowStyle='{StaticResource DefaultRowStyle}'
 				  AutoGeneratingColumn='datagridApplicationsList_AutoGeneratingColumn'
 				  SelectionChanged='datagridApplicationsList_SelectionChanged'>
 			<DataGrid.Resources>
+				<!--Selected color when a Row is selected-->
+				<SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+								 Color='#FF0077D4'
+								 Opacity='0.5' />
+				<!--Selected color when a Row is not selected-->
+				<!--<SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+								 Color="#4087CEEB" />-->
+
 				<Style TargetType="{x:Type DataGridColumnHeader}">
+					<Setter Property='Foreground'
+							Value='DarkGreen' />
 					<Style.Triggers>
 						<Trigger Property="IsMouseOver"
 								 Value="True">
@@ -48,21 +72,110 @@
 						</Trigger>
 					</Style.Triggers>
 				</Style>
+				<!--<Style TargetType='DataGridCell'>
+					<Setter Property='Foreground'
+							Value='{Binding CurrentForeground}' />
+				</Style>-->
 				<DataTemplate x:Key="ImageTemplate">
 					<Image Source="{Binding ApplicationIcon}"
 						   Width='16' />
 				</DataTemplate>
+				<Style x:Key='DiscreteCheckBoxStyle_Readonly'
+					   TargetType="{x:Type CheckBox}">
+					<Setter Property="SnapsToDevicePixels"
+							Value="true" />
+					<Setter Property="FocusVisualStyle"
+							Value="{DynamicResource CheckBoxFocusVisual}" />
+					<Setter Property="Background"
+							Value="{DynamicResource NormalBrush}" />
+					<Setter Property="BorderBrush"
+							Value="{DynamicResource NormalBorderBrush}" />
+					<Setter Property='IsEnabled'
+							Value='False' />
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type CheckBox}">
+								<Border>
+									<Grid>
+										<ContentPresenter Content="{TemplateBinding Content}"
+														  ContentTemplate="{TemplateBinding ContentTemplate}"
+														  Margin="{TemplateBinding Padding}" />
+										<Border>
+											<Border.Background>
+												<VisualBrush Opacity="1.0"
+															 Stretch="None">
+													<VisualBrush.Visual>
+														<Path Name="path"
+															  Opacity="1"
+															  Data="M 0 0 L 10 10 M 10 0 L 0 10"
+															  Stroke='#FFB73434'
+															  StrokeThickness="3"
+															  StrokeStartLineCap="Round"
+															  StrokeEndLineCap="Round"
+															  StrokeLineJoin="Round" />
+													</VisualBrush.Visual>
+												</VisualBrush>
+											</Border.Background>
+										</Border>
+									</Grid>
+								</Border>
+								<ControlTemplate.Triggers>
+									<Trigger Property="IsChecked"
+											 Value="{x:Null}">
+										<!--<Setter TargetName="path"
+												Property="Opacity"
+												Value="1.0" />-->
+										<Setter TargetName='path'
+												Property='Data'
+												Value='M 1 5 L 4 5' />
+										<Setter TargetName="path"
+												Property="Stroke"
+												Value="#FFFFB100" />
+									</Trigger>
+									<Trigger Property="IsChecked"
+											 Value="True">
+										<!--<Setter TargetName="path"
+												Property="Opacity"
+												Value="1.0" />-->
+										<Setter TargetName='path'
+												Property='Data'
+												Value='M 0 5 L 3 10 10 0' />
+										<Setter TargetName="path"
+												Property="Stroke"
+												Value="#FF70A16F" />
+										<!--<Setter TargetName="path"
+												Property="StrokeThickness"
+												Value="3" />-->
+									</Trigger>
+									<Trigger Property="IsEnabled"
+											 Value="False">
+										<Setter Property="Foreground"
+												Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
 			</DataGrid.Resources>
 		</DataGrid>
+		<GridSplitter Grid.Column='0'
+					  Grid.Row='2'
+					  HorizontalAlignment='Stretch'
+					  VerticalAlignment='Top'
+					  Height='5' />
 		<RichTextBox Name='richtextboxCurrentItemMessages'
 					 Grid.Column='0'
 					 Grid.Row='2'
+					 Grid.RowSpan='2'
+					 Margin='0 5 0 0'
 					 IsDocumentEnabled='True'
 					 BorderThickness='1'
 					 IsReadOnly='True'
 					 IsReadOnlyCaretVisible='True'
-					 FontSize='15'
-					 Background='#fafafa'
+					 FontSize='10'
+					 Background='#111'
 					 ScrollViewer.VerticalScrollBarVisibility='Auto'>
 			<RichTextBox.Resources>
 				<Style TargetType="{x:Type Paragraph}">
@@ -72,15 +185,22 @@
 			</RichTextBox.Resources>
 			<FlowDocument PageWidth='{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=RichTextBox}}' />
 		</RichTextBox>
+		<GridSplitter Grid.Column='1'
+					  Grid.Row='1'
+					  Grid.RowSpan='2'
+					  HorizontalAlignment='Left'
+					  VerticalAlignment='Stretch'
+					  Width='5' />
 		<RichTextBox Name='richtextboxMessages'
 					 Grid.RowSpan='2'
 					 Grid.Column='1'
 					 Grid.Row='1'
+					 Margin='5 0 0 0'
 					 IsDocumentEnabled='True'
 					 BorderThickness='1'
 					 IsReadOnly='True'
 					 IsReadOnlyCaretVisible='True'
-					 FontSize='15'
+					 FontSize='10'
 					 Background='#fafafa'
 					 ScrollViewer.VerticalScrollBarVisibility='Auto'>
 			<RichTextBox.Resources>
@@ -91,5 +211,12 @@
 			</RichTextBox.Resources>
 			<FlowDocument PageWidth='{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=RichTextBox}}' />
 		</RichTextBox>
+		<Label Grid.Column='1'
+			   Grid.Row='3'
+			   VerticalAlignment='Center'
+			   HorizontalAlignment='Right'
+			   Content='A_bout'
+			   Cursor='Hand'
+			   MouseLeftButtonDown='about_MouseLeftButtonDown' />
 	</Grid>
 </Window>

@@ -63,6 +63,10 @@
   <ItemGroup>
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Framework" />
+    <Reference Include="nunit.framework, Version=2.6.1.12217, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\DLLs\NUnit\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -85,6 +89,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="..\..\SharedClasses\AboutWindow2.xaml">
+      <Link>AboutWindow2.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="..\..\SharedClasses\InputBoxWPF.xaml">
       <Link>InputBoxWPF.xaml</Link>
       <Generator>MSBuild:Compile</Generator>
@@ -99,6 +108,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="..\..\SharedClasses\ShowNoCallbackNotificationInterop.cs">
+      <Link>ShowNoCallbackNotificationInterop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\AboutWindow2.xaml.cs">
+      <Link>AboutWindow2.xaml.cs</Link>
+      <DependentUpon>AboutWindow2.xaml</DependentUpon>
+    </Compile>
     <Compile Include="..\..\SharedClasses\AppTypeIndependant.cs">
       <Link>AppTypeIndependant.cs</Link>
     </Compile>
@@ -236,6 +252,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Themes\Default.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
