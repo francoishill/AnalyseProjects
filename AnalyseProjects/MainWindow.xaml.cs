@@ -623,6 +623,11 @@ namespace AnalyseProjects
 
 		private bool DetermineIfAutoUpdatingIsImplemented(out string errorIfFailed)
 		{
+			Add another check here which makes sure if we have a Winforms/Console app that
+			the "static void Main(string[] args)" or "static int Main(string[] args)" has got
+			the Attribute named [STAThread] before it, otherwise the method named
+			"ShowUnHandledException" will crash when trying to create new window: "new UnhandledExceptionsWindow(exc);"
+
 			this.AutoUpdatingImplemented = false;
 			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
 			if (this.CsProjectRelativeToSolution == null)
@@ -773,8 +778,34 @@ namespace AnalyseProjects
 
 		private bool DetermineIfPoliciesArePartOfNsisSetup(out string errorIfFailed)
 		{
-			errorIfFailed = "DetermineIfLicensePoliciesArePartOfNsisSetup not implemented yet.";
-			return false;
+			this.PoliciesImplemented = false;
+			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
+			if (this.CsProjectRelativeToSolution == null)
+				tmpcachedErrors.Add("CsProjectRelativeToSolutionFilePath is NULL");
+			else if (this.GetCsProjAppType() == OwnAppsInterop.ApplicationTypes.DLL)
+				tmpcachedErrors.Add("The .csproj file (with the same name as the solution) is of type DLL.");
+			else
+			{
+				string tmperr;
+				
+				See todo items (items having a visual studio warning) inside file OwnAppsInterop.cs
+
+				bool? policiesImplementedInThisProj = OwnAppsInterop.ArePoliciesImplemented(this.GetCsProjFullPath(), this.GetCsProjAppType(), out tmperr);
+				if (policiesImplementedInThisProj.HasValue)
+				{
+					this.LicensingImplemented = policiesImplementedInThisProj;
+				}
+				else
+					tmpcachedErrors.Add(tmperr);
+			}
+			if (this.PoliciesImplemented == null)
+			{
+				errorIfFailed = "Unable to determine PoliciesImplemented for application '" + this.ApplicationName + "': "
+					+ string.Join("|", tmpcachedErrors);
+				return false;
+			}
+			errorIfFailed = null;
+			return true;
 		}
 
 		private bool DetermineIfIssueTrackingIsImplemented(out string errorIfFailed)
