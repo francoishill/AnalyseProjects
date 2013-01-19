@@ -447,8 +447,7 @@ namespace AnalyseProjects
 				return false;
 			}
 
-			int todoCheckForUnhandledExceptionsHandledIsRedundant;
-			//TODO: In the code of CheckForUpdates_ExceptionHandler, it also registers an event handler for Unhandled Exceptions
+			int todoAddCheckIfHelpIsLinkedIntoApp;
 			if (!DetermineIfFolderStructureForSolutionAndCsprojAreCorrect(out errorIfFailed))
 				return false;
 			if (!DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out errorIfFailed, out warnings))
@@ -457,6 +456,7 @@ namespace AnalyseProjects
 				return false;
 			if (!DetermineIfAppIconImplemented(out errorIfFailed))
 				return false;
+			//DONE: In the code of CheckForUpdates_ExceptionHandler, it also registers an event handler for Unhandled Exceptions
 			/*if (!DetermineIfUnhandledExceptionsHandled(out errorIfFailed))
 				return false;*/
 			if (!DetermineIfAutoUpdatingIsImplemented(out errorIfFailed))
