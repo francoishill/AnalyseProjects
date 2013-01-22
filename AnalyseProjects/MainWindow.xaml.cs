@@ -623,11 +623,6 @@ namespace AnalyseProjects
 
 		private bool DetermineIfAutoUpdatingIsImplemented(out string errorIfFailed)
 		{
-			//Add another check here which makes sure if we have a Winforms/Console app that
-			//the "static void Main(string[] args)" or "static int Main(string[] args)" has got
-			//the Attribute named [STAThread] before it, otherwise the method named
-			//"ShowUnHandledException" will crash when trying to create new window: "new UnhandledExceptionsWindow(exc);"
-
 			this.AutoUpdatingImplemented = false;
 			List<string> tmpcachedErrors = new List<string>();//Cache each error because we might have multiple csproj paths for a solution
 			if (this.CsProjectRelativeToSolution == null)
@@ -787,8 +782,6 @@ namespace AnalyseProjects
 			else
 			{
 				string tmperr;
-				
-				//See todo items (items having a visual studio warning) inside file OwnAppsInterop.cs
 
 				bool? policiesImplementedInThisProj = OwnAppsInterop.ArePoliciesImplemented(this.GetCsProjFullPath(), this.GetCsProjAppType(), out tmperr);
 				if (policiesImplementedInThisProj.HasValue)
