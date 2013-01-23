@@ -447,7 +447,6 @@ namespace AnalyseProjects
 				return false;
 			}
 
-			int todoAddCheckIfHelpIsLinkedIntoApp;
 			if (!DetermineIfFolderStructureForSolutionAndCsprojAreCorrect(out errorIfFailed))
 				return false;
 			if (!DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out errorIfFailed, out warnings))
@@ -470,8 +469,6 @@ namespace AnalyseProjects
 			if (!DetermineIfIssueTrackingIsImplemented(out errorIfFailed))
 				return false;
 
-			int todoCentralizeAutoStartupWithWindows;
-			//TODO: Centralize the AutoStartupWithWindows also for all apps, so we can see in this analysis tool if it will by default startup with windows
 			return true;
 		}
 
