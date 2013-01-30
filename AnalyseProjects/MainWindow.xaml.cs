@@ -71,7 +71,8 @@ namespace AnalyseProjects
 					&& !app.Equals("ApplicationManager", StringComparison.InvariantCultureIgnoreCase)
 					&& !app.Equals("SharedClasses", StringComparison.InvariantCultureIgnoreCase)
 					//&& !app.Equals("AddDependenciesCSharp", StringComparison.InvariantCultureIgnoreCase)
-					&& !app.Equals("LicensingServer", StringComparison.InvariantCultureIgnoreCase))
+					&& !app.Equals("LicensingServer", StringComparison.InvariantCultureIgnoreCase)
+					&& !app.Equals("CodeSnippets", StringComparison.InvariantCultureIgnoreCase))
 				.Distinct();
 
 			//List<string> errors = new List<string>();
@@ -248,6 +249,14 @@ namespace AnalyseProjects
 			});
 		}
 
+		private void menuitemExploreToCsprojeFile_Click(object sender, RoutedEventArgs e)
+		{
+			PerformIfNotNullDataContext(sender, (item) =>
+			{
+				item.ExploreToCsprojFullPath();
+			});
+		}
+
 		private void menuitemCopyCsProjFileFullPath_Click(object sender, RoutedEventArgs e)
 		{
 			PerformIfNotNullDataContext(sender, (item) =>
@@ -267,7 +276,6 @@ namespace AnalyseProjects
 			{
 				new DisplayItem("Author", "Francois Hill"),
 				new DisplayItem("Icon(s) obtained from", null)//"http://www.icons-land.com", "http://www.icons-land.com/vista-base-software-icons.php")
-
 			});
 		}
 	}
@@ -343,6 +351,12 @@ namespace AnalyseProjects
 		[DisplayName("Auto Updating")]
 		[Description("Whether Auto Updating is implemented in our application's main entry point.")]
 		public bool? AutoUpdatingImplemented { get { return _autoupdatingimplemented; } set { _autoupdatingimplemented = value; OnPropertyChanged("AutoUpdatingImplemented"); } }
+
+		private bool? _tracenvironmentexists;
+		//NULL means not checked yet
+		[DisplayName("Trac")]
+		[Description("Whether Trac environment (ticketing system) exists online.")]
+		public bool? TracEnvironmentExists { get { return _tracenvironmentexists; } set { _tracenvironmentexists = value; OnPropertyChanged("TracEnvironmentExists"); } }
 
 		private bool? _licensingimplemented;
 		//NULL means not checked yet
@@ -460,6 +474,8 @@ namespace AnalyseProjects
 				return false;*/
 			if (!DetermineIfAutoUpdatingIsImplemented(out errorIfFailed))
 				return false;
+			if (!DetermineIfTracEnvironmentExists(out errorIfFailed))
+				return false;
 			if (!DetermineIfLicensingIsImplemented(out errorIfFailed))
 				return false;
 			if (!DetermineIfAboutBoxIsImplemented(out errorIfFailed))
@@ -513,6 +529,16 @@ namespace AnalyseProjects
 				errorIfFailed = "The expected csproj file relative path for application '" + this.ApplicationName + "' was '"
 					+ this.ApplicationName + "\\" + this.ApplicationName + "\\" + this.ApplicationName + ".csproj'"
 					+ ", but instead it was '" + csprojFileRelativePathToVSroot + "'";
+				return false;
+			}
+
+			//Now ensure we have ScreenShots
+			string screenshotsDir = Path.Combine(Path.GetDirectoryName(GetCsProjFullPath()), "ScreenShots");
+			if (!Directory.Exists(screenshotsDir)
+				|| OwnAppsInterop.GetPicturesInDirectory(screenshotsDir).Length == 0)
+			{
+				this.FolderStructureCorrect = false;
+				errorIfFailed = "No screenshots found for project of '" + this.ApplicationName + "'.";
 				return false;
 			}
 
@@ -651,6 +677,29 @@ namespace AnalyseProjects
 			return true;
 		}
 
+		private bool DetermineIfTracEnvironmentExists(out string errorIfFailed)
+		{
+			this.TracEnvironmentExists = null;
+
+			bool? tracEnvironmentExists = OwnAppsInterop.DoesTracEnvironmentExistForProject(
+				this.ApplicationName,
+				out errorIfFailed,
+				(doesExist, tracUrlOrPossibleError) =>
+				{
+					//This callback will only happen if the Trac url existed but does not exist anymore
+					if (doesExist.HasValue
+						&& doesExist.Value == false)
+					{//if doesExist == null or TRUE, we just ignore it, if false it means the url does not exist anymore
+						UserMessages.ShowWarningMessage("Please re-analyse, the Trac url does not exist anymore: " + tracUrlOrPossibleError);
+					}
+				});
+			if (!tracEnvironmentExists.HasValue)
+				return false;
+
+			this.TracEnvironmentExists = tracEnvironmentExists.Value;
+			return tracEnvironmentExists.Value;
+		}
+
 		private bool DetermineIfLicensingIsImplemented(out string errorIfFailed)
 		{
 			this.LicensingImplemented = false;
@@ -714,7 +763,7 @@ namespace AnalyseProjects
 			string mainWinOrFormFullpath = Path.Combine(Path.GetDirectoryName(GetCsProjFullPath()), MainWindowOfFormCodeBehindRelativePath);
 			string expectedStartOfBlock = "AboutWindow2.ShowAboutWindow(";
 			string mainSourceCode_removedComments =
-				OwnAppsInterop.ExtractMethodBlockFromSourcecodeFile(mainWinOrFormFullpath, expectedStartOfBlock, out errorIfFailed);
+				OwnAppsInterop.ExtractMethodBlockFromSourcecodeFile(mainWinOrFormFullpath, expectedStartOfBlock, delegate { return null; }, out errorIfFailed);
 
 			if (mainSourceCode_removedComments == null)
 				return false;//errorIfFailed should already be set
@@ -825,6 +874,16 @@ namespace AnalyseProjects
 			},
 			csharpPath,
 			false);*/
+		}
+
+		public void ExploreToSolutionFullpath()
+		{
+			Process.Start("explorer", "/select,\"" + this.SolutionFilePath + "\"");
+		}
+
+		public void ExploreToCsprojFullPath()
+		{
+			Process.Start("explorer", "/select,\"" + this.GetCsProjFullPath() + "\"");
 		}
 
 		public void CopyCsprojFileFullPathToClipboard()
