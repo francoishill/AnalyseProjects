@@ -16,7 +16,7 @@ namespace AnalyseProjects
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			AutoUpdating.CheckForUpdates_ExceptionHandler();
-			
+
 			/*AppDomain.CurrentDomain.UnhandledException += (sn, ev) =>
 			{
 				MessageBox.Show("ERROR: " + ((Exception)ev.ExceptionObject).Message);
