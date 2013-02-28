@@ -194,7 +194,10 @@ namespace AnalyseProjects
 
 		private void datagridApplicationsList_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
 		{
-			if (e.PropertyName.Equals("CurrentForeground", StringComparison.InvariantCultureIgnoreCase))
+			DataGrid dg = sender as DataGrid;
+			if (dg == null) return;
+
+			if (e.PropertyName.Equals("CurrentForeground", StringComparison.InvariantCultureIgnoreCase))//We cannot simply make 'CurrentForeground' protected, otherwise the WPF Binding will not work
 			{
 				e.Cancel = true;
 				return;
@@ -212,7 +215,7 @@ namespace AnalyseProjects
 				column.IsReadOnly = false;
 				column.IsThreeState = e.PropertyType == typeof(Nullable<Boolean>);
 				column.Binding = new Binding() { Mode = BindingMode.OneWay, Path = new PropertyPath(e.PropertyName) };
-				column.ElementStyle = datagridApplicationsList.FindResource("DiscreteCheckBoxStyle_Readonly") as Style;
+				column.ElementStyle = dg.FindResource("DiscreteCheckBoxStyle_Readonly") as Style;
 				e.Column = column;
 				//}
 			}
@@ -220,7 +223,7 @@ namespace AnalyseProjects
 			{
 				DataGridTemplateColumn column = new DataGridTemplateColumn();
 				column.Header = e.PropertyName;
-				column.CellTemplate = datagridApplicationsList.FindResource("ImageTemplate") as DataTemplate;
+				column.CellTemplate = dg.FindResource("ImageTemplate") as DataTemplate;
 				e.Column = column;
 			}
 
