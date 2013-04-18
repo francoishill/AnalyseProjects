@@ -20,7 +20,7 @@ namespace AnalyseProjects
 			/*AppDomain.CurrentDomain.UnhandledException += (sn, ev) =>
 			{
 				MessageBox.Show("ERROR: " + ((Exception)ev.ExceptionObject).Message);
-			};*/			
+			};*/
 
 			base.OnStartup(e);
 

@@ -328,6 +328,18 @@ namespace AnalyseProjects
 		[Description("Have we checked that all paths (in csproj files) are relative (and correct) instead of absolute.")]
 		public bool? RelativePathsCorrect { get { return _relativepathscorrect; } set { _relativepathscorrect = value; OnPropertyChanged("RelativePathsCorrect"); } }
 
+		private bool? _notusingclientdotnet;
+		//NULL means not checked yet
+		[DisplayName("Full .Net")]
+		[Description("Is the main csproj file using the FULL .NET instead of Client profile.")]
+		public bool? NotUsingClientDotNet { get { return _notusingclientdotnet; } set { _notusingclientdotnet = value; OnPropertyChanged("NotUsingClientDotNet"); } }
+
+		private bool? _outputpathsandbaseintermediateoutputpathscorrect;
+		//NULL means not checked yet
+		[DisplayName("Outputpaths")]
+		[Description("Have we checked that all OutputPaths and BaseIntermediateOutputPath are correct in the csproj file.")]
+		public bool? OutputPathsAndBaseIntermediateOutputPathsCorrect { get { return _outputpathsandbaseintermediateoutputpathscorrect; } set { _outputpathsandbaseintermediateoutputpathscorrect = value; OnPropertyChanged("OutputPathsAndBaseIntermediateOutputPathsCorrect"); } }
+
 		private bool? _mainwinorformimplemented;
 		//NULL means not checked yet
 		[DisplayName("Main")]
@@ -442,6 +454,8 @@ namespace AnalyseProjects
 			//Reset to NULL
 			this.FolderStructureCorrect = null;
 			this.RelativePathsCorrect = null;
+			this.NotUsingClientDotNet = null;
+			this.OutputPathsAndBaseIntermediateOutputPathsCorrect = null;
 			this.MainWinOrFormImplemented = null;
 			this.AppIconImplemented = null;
 			//this.UnhandledExceptionsHandled = null;
@@ -464,9 +478,15 @@ namespace AnalyseProjects
 				return false;
 			}
 
+			warnings = new List<string>();
+
 			if (!DetermineIfFolderStructureForSolutionAndCsprojAreCorrect(out errorIfFailed))
 				return false;
-			if (!DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out errorIfFailed, out warnings))
+			if (!DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out errorIfFailed, ref warnings))
+				return false;
+			if (!DoubleCheckNotUsingClientDotNet(out errorIfFailed, ref warnings))
+				return false;
+			if (!DoubleCheckOutputPathsAndBaseIntermediateOutputPathAreCorrect(out errorIfFailed, ref warnings))
 				return false;
 			if (!DetermineIfCsProjectHasMainFormOrWindowAndItsImplemented(out errorIfFailed))
 				return false;
@@ -550,14 +570,44 @@ namespace AnalyseProjects
 			return true;
 		}
 
-		private bool DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out string errorIfFailed, out List<string> warnings)
+		private bool DoubleCheckPathsInCsProjectAreCorrectAndAreRelative(out string errorIfFailed, ref List<string> warnings)
 		{
+			List<string> tmpwarnings;
 			//We only check the one csproj (even if there are many), we only care about the main EXE project with same name as solution
 			bool success = OwnAppsInterop.FixIncludeFilepathsInCsProjFile(
 				GetCsProjFullPath(),
 				out errorIfFailed,
-				out warnings);//Warnings are like if a specific Filepath was incorrect but we did not fix it
+				out tmpwarnings);//Warnings are like if a specific Filepath was incorrect but we did not fix it
+			if (tmpwarnings != null)
+				warnings.AddRange(tmpwarnings);
 			this.RelativePathsCorrect = success;
+			return success;
+		}
+
+		private bool DoubleCheckNotUsingClientDotNet(out string errorIfFailed, ref List<string> warnings)
+		{
+			bool? isUsingFull = OwnAppsInterop.CheckIfNotUsingClientDotNet(GetCsProjFullPath(), out errorIfFailed);
+			this.NotUsingClientDotNet = isUsingFull;
+			if (isUsingFull != true)
+			{
+				if (isUsingFull.HasValue)
+					warnings.Add("CsProj is using Client .NET profile instead of full.");
+				else
+					warnings.Add(errorIfFailed);
+			}
+			return true;//We dont return false otherwise processing will stop, we continue but is marked as warning above
+		}
+
+		private bool DoubleCheckOutputPathsAndBaseIntermediateOutputPathAreCorrect(out string errorIfFailed, ref List<string> warnings)
+		{
+			List<string> tmpwarnings;
+			bool success = OwnAppsInterop.FixBuildOutputPaths(
+				GetCsProjFullPath(),
+				out errorIfFailed,
+				out tmpwarnings);
+			if (tmpwarnings != null)
+				warnings.AddRange(tmpwarnings);
+			this.OutputPathsAndBaseIntermediateOutputPathsCorrect = success;
 			return success;
 		}
 
