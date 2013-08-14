@@ -421,7 +421,9 @@ namespace AnalyseProjects
 			if (tmperr != null) errorIfFailed += tmperr + "|";
 
 			this.IsInstalled = PublishInterop.IsInstalled(ApplicationName);
-			this.IsVersionControlled = OwnAppsInterop.DirIsValidSvnPath(Path.GetDirectoryName(SolutionFilePath));
+			this.IsVersionControlled =
+				OwnAppsInterop.DirIsValidSvnPath(Path.GetDirectoryName(SolutionFilePath))
+				|| OwnAppsInterop.DirIsValidGitPath(Path.GetDirectoryName(SolutionFilePath));
 
 			this.CurrentColor = Brushes.Black;
 
